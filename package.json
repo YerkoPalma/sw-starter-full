@@ -24,6 +24,7 @@
     "sw-precache": "^4.0.0"
   },
   "dependencies": {
-    "dexie": "^1.4.1"
+    "dexie": "^1.4.1",
+    "firebase": "^3.2.1"
   }
 }

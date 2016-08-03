@@ -13,6 +13,11 @@ This is some sort of a second part of my simple [sw-starter](https://github.com/
 * The service-worker is now generated with [`sw-precache`](https://github.com/GoogleChrome/sw-precache)
 * The _offline first_ strategy is a bit improved
 
+## Knowledge
+
+* `sw-precache` only cache the assets of the proyect, and to cache the data, ~~should use different `fetch` handler~~ use only the local database.
+* In the `sw-precache` should be included specificly the files to cache to ignore junk files
+
 ## License
 
 MIT &copy; [YerkoPalma](https://github.com/YerkoPalma)
