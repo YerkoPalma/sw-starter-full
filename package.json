@@ -1,0 +1,29 @@
+{
+  "name": "sw-full-starter",
+  "version": "0.0.1",
+  "description": "More realistic service worker starter",
+  "main": "app.js",
+  "scripts": {
+    "test": "standard --verbose | snazzy"
+  },
+  "keywords": [
+    "service",
+    "worker",
+    "todo"
+  ],
+  "standard": {
+    "ignore": [
+      "service-worker.js"
+    ]
+  },
+  "author": "YerkoPalma",
+  "license": "MIT",
+  "devDependencies": {
+    "standard": "^7.1.2",
+    "surge": "^0.18.0",
+    "sw-precache": "^4.0.0"
+  },
+  "dependencies": {
+    "dexie": "^1.4.1"
+  }
+}
