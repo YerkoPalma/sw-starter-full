@@ -17,7 +17,7 @@
   let app = {}
   let db = new Dexie('todos')
   db.version(1).stores({
-    todos: '++id,title,state,date'
+    todos: '++id,title,checked,date'
   })
 
   db.open().catch(function (err) {
@@ -27,7 +27,7 @@
   // define Todo class
   function Todo (args) {
     this.title = args ? args.title : ''
-    this.state = args ? args.state : false
+    this.checked = args ? args.checked : false
     this.date = args ? args.date : new Date()
   }
 
@@ -48,12 +48,15 @@
    */
   app.getTodos = function () {
     // update from the database
-    app.hasRequestPending = true
     // if there is connection, try to get data from firbase
     if (navigator.online) {
       rootRef.once('value')
-        .then(function () {
-          app.hasRequestPending = false
+        .then(function (todos) {
+          app.todos = todos
+
+          // update the local db with whatever is in firebase
+          db.todos.clear()
+          db.bulkAdd(todos)
         }).catch(function (err) {
           console.log('[app] Error ' + err)
         })
@@ -88,7 +91,10 @@
    * @return {Boolean}
    */
   app.removeTodo = function (todo) {
+    // delete from local db
+    db.todos.delete(todo.id)
 
+    // delete from firebase
   }
 
   /**
@@ -99,7 +105,16 @@
    * @return {Boolean}
    */
   app.setTodo = function (oldTodo, newTodo) {
+    // update local db
+    db.todos.update(oldTodo.id, newTodo).then(function (updated) {
+      if (updated) {
+        console.log('[app.setTodo] todo updated')
+      } else {
+        console.log('[app.setTodo] todo NOT updated')
+      }
+    })
 
+    // update firebase
   }
 
   /**
@@ -108,7 +123,16 @@
    * @return {Boolean}
    */
   app.checkAll = function () {
-
+    // check all todos in local db
+    const checkedTodos = db.todos.toArray().map(function (todo) {
+      todo.checked = true
+      return todo
+    })
+    db.todos.bulkPut(checkedTodos).then(function () {
+      console.log('[app] checked all todos')
+    }).catch(function (err) {
+      console.log(err)
+    })
   }
 
   /**
