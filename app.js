@@ -66,7 +66,7 @@
       app.shouldUpdate = true
     }
     // update the view
-    uiManager.addTodo(app.todos)
+    uiManager.updateTodos(app.todos)
   }
 
   /**
@@ -107,6 +107,9 @@
     db.todos.delete(todo.id)
 
     // delete from firebase
+
+    // update the view
+    uiManager.removeTodo(todo)
   }
 
   /**
@@ -127,6 +130,9 @@
     })
 
     // update firebase
+
+    // update the view
+    uiManager.setTodo(oldTodo, newTodo)
   }
 
   /**
@@ -170,9 +176,9 @@
   app.todos = db.todos
   if (app.todos) {
     // update the DOM
+    uiManager.updateTodos(app.todos)
   } else {
     app.getTodos()
-    // update the DOM
   }
 
   // register the service worker

@@ -1,6 +1,3 @@
-// manage the ui for todos
-module.exports = ui
-
 const todoInput = document.querySelector('.todo-form input')
 const todosList = document.querySelector('ul.todos')
 
@@ -22,7 +19,7 @@ const ui = {
   },
   /**
    * Update all todos, use it in the first rendering
-   * 
+   *
    * @param {Array} list of all todos
    */
   updateTodos: function (todos) {
@@ -41,5 +38,31 @@ const ui = {
     Array.prototype.forEach.call(todosLi, function (todoLi) {
       todoLi.classList.add('checked')
     })
+  },
+  /**
+   * Remove a single todo from the ul list
+   *
+   * @param {Todo} todo
+   */
+  removeTodo: function (todo) {
+    const todoEl = document.getElementById(todo.id)
+    todoEl.parentNode.removeChild(todoEl)
+  },
+  /**
+   * Update a todo
+   *
+   * @param {Todo} oldTodo
+   * @param {Todo} newTodo
+   */
+  setTodo: function (oldTodo, newTodo) {
+    const todoEl = document.getElementById(oldTodo.id)
+    // set the title
+    todoEl.textContent = newTodo.title
+    // set the id
+    todoEl.setAttribute('id', newTodo.id)
+    // set the state
+    todoEl.classList.add(newTodo.checked ? 'checked' : '')
   }
 }
+// manage the ui for todos
+module.exports = ui
