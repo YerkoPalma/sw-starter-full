@@ -3,6 +3,7 @@
   'use strict'
   const Dexie = require('dexie')
   const firebase = require('firebase')
+  const uiManager = require('./ui')
 
   // Initialize Firebase
   var config = {
@@ -64,16 +65,24 @@
       app.todos = db.todos
       app.shouldUpdate = true
     }
+    // update the view
+    uiManager.addTodo(app.todos)
   }
 
   /**
    * Add a new todo
    *
-   * @param {Todo} todo
+   * @param {String} todoTitle
    */
-  app.addTodo = function (todo) {
+  app.addTodo = function (todoTitle) {
+    // creates the todo
+    const todo = new Todo({
+      title: todoTitle,
+      checked: false
+    })
     // saves to local db
-    db.todos.add(todo)
+    const todoId = db.todos.add(todo)
+    todo.id = todoId
 
     // try to save asynchronously to firebase
     if (navigator.online) {
@@ -82,6 +91,9 @@
     } else {
       app.shouldUpdate = true
     }
+    app.todos.push(todo)
+    // update the view
+    uiManager.addTodo(todo)
   }
 
   /**
@@ -133,10 +145,12 @@
     }).catch(function (err) {
       console.log(err)
     })
+    // update the view
+    uiManager.checkAll()
   }
 
   /**
-   * update local data from database, only after recovering internet connection
+   * Update local data from database, only after recovering internet connection
    *
    * @return {Boolean}
    */
@@ -148,7 +162,7 @@
   }
 
   /**
-   * if conectivity changes back to online, update if there is difference in local data and online data
+   * If conectivity changes back to online, update if there is difference in local data and online data
    */
   window.addEventListener('online', app.update())
 
