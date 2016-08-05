@@ -4,7 +4,11 @@
   "description": "More realistic service worker starter",
   "main": "app.js",
   "scripts": {
-    "test": "standard --verbose | snazzy"
+    "test": "standard --verbose | snazzy",
+    "build:sw": "sw-precache --static-file-globs='dist/**/*.*'",
+    "build:copy": "mkdir -p dist && cp index.html dist/index.html",
+    "build:browserify": "NODE_ENV=production browserify -e app.js -o dist/app.js",
+    "build": "npm run build:copy && npm run build:browserify && npm run build:sw"
   },
   "keywords": [
     "service",
@@ -19,6 +23,7 @@
   "author": "YerkoPalma",
   "license": "MIT",
   "devDependencies": {
+    "browserify": "^13.1.0",
     "standard": "^7.1.2",
     "surge": "^0.18.0",
     "sw-precache": "^4.0.0"
