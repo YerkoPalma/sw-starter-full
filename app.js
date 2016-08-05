@@ -62,7 +62,9 @@ app.getTodos = function () {
         console.log('[app] Error ' + err)
       })
   } else {
-    app.todos = db.todos
+    db.todos.toArray().then(function (todosArray) {
+      app.todos = todosArray
+    })
     app.shouldUpdate = true
   }
   // update the view
@@ -172,8 +174,16 @@ app.update = function () {
  */
 window.addEventListener('online', app.update())
 
-// for first load
-app.todos = db.todos
+document.querySelector('.todo-form').addEventListener('submit', function (e) {
+  e.preventDefault()
+  app.addTodo(document.getElementById('todo-input').value)
+})
+
+// for the first load
+db.todos.toArray().then(function (todosArray) {
+  app.todos = todosArray
+})
+
 if (app.todos) {
   // update the DOM
   uiManager.updateTodos(app.todos)

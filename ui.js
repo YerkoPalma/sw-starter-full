@@ -23,13 +23,11 @@ const ui = {
    * @param {Array} list of all todos
    */
   updateTodos: function (todos) {
-    todos.toArray().then(function (todosArray) {
-      todosArray.forEach(function (todo) {
-        let todoLi = document.createElement('li')
-        todoLi.textContent = todo.title
-        todoLi.setAttribute('id', todo.id)
-        todosList.appendChild(todoLi)
-      })
+    todos.forEach(function (todo) {
+      let todoLi = document.createElement('li')
+      todoLi.textContent = todo.title
+      todoLi.setAttribute('id', todo.id)
+      todosList.appendChild(todoLi)
     })
   },
   /**
