@@ -143,7 +143,8 @@ app.setTodo = function (oldTodo, newTodo) {
 app.update = function () {
   // only update if needed
   if (app.shouldUpdate) {
-
+    // should be enough
+    app.getTodos()
   }
 }
 
@@ -162,9 +163,9 @@ db.todos.toArray().then(function (todosArray) {
   if (todosArray && todosArray.length > 0) {
     app.todos = todosArray
     uiManager.updateTodos(app.todos)
-  } else {
-    app.getTodos()
   }
+  // update from db always
+  app.getTodos()
 })
 
 // register the service worker
