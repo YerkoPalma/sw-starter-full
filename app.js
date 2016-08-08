@@ -61,7 +61,7 @@ app.getTodos = function () {
       db.todos.toArray().then(function (todos) {
         app.todos = todos
         console.log('[app.getTodos] Done getting todos from local db')
-  
+
         // update the view
         uiManager.updateTodos(app.todos)
       })
@@ -116,6 +116,8 @@ app.addTodo = function (todoTitle) {
       // update the view
       uiManager.addTodo(todo)
       console.log('[app.getTodo] Done adding todo to local db')
+    }).catch(function (err) {
+      console.log(err)
     })
     console.log('[app.getTodo] Done adding todo to firebase')
   })

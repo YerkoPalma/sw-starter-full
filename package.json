@@ -33,7 +33,6 @@
   },
   "dependencies": {
     "dexie": "^1.4.1",
-    "firebase": "^3.2.1",
     "xhr": "^2.2.2"
   }
 }
