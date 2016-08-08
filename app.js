@@ -24,12 +24,6 @@ app.todos = []
 app.shouldUpdate = false
 
 /**
- * Methods should handle offline mode by checking navigator.online.
- * In fact, offline is supported by default, and online only when
- * navigator.online === true.
- */
-
-/**
  * Get the list of all todos
  */
 app.getTodos = function () {
