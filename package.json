@@ -4,7 +4,8 @@
   "description": "More realistic service worker starter",
   "main": "app.js",
   "scripts": {
-    "test": "standard --verbose | snazzy",
+    "deps": "dependency-check . && dependency-check . --extra --no-dev",
+    "test": "npm run deps && standard --verbose | snazzy",
     "build:sw": "sw-precache --static-file-globs='dist/**/*.*'",
     "build:copy": "mkdir -p dist && cp index.html dist/index.html",
     "build:browserify": "NODE_ENV=production browserify -e app.js -o dist/app.js",
@@ -17,19 +18,22 @@
   ],
   "standard": {
     "ignore": [
-      "service-worker.js"
+      "service-worker.js",
+      "dist/"
     ]
   },
   "author": "YerkoPalma",
   "license": "MIT",
   "devDependencies": {
     "browserify": "^13.1.0",
+    "dependency-check": "^2.6.0",
     "standard": "^7.1.2",
     "surge": "^0.18.0",
     "sw-precache": "^4.0.0"
   },
   "dependencies": {
     "dexie": "^1.4.1",
-    "firebase": "^3.2.1"
+    "firebase": "^3.2.1",
+    "xhr": "^2.2.2"
   }
 }

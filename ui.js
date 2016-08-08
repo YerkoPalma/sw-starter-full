@@ -12,7 +12,7 @@ const ui = {
     // add to list
     let todoLi = document.createElement('li')
     todoLi.textContent = todo.title
-    todoLi.setAttribute('id', todo.id)
+    todoLi.setAttribute('id', todo._id)
     todosList.appendChild(todoLi)
     // clear input
     todoInput.value = ''
@@ -26,7 +26,7 @@ const ui = {
     todos.forEach(function (todo) {
       let todoLi = document.createElement('li')
       todoLi.textContent = todo.title
-      todoLi.setAttribute('id', todo.id)
+      todoLi.setAttribute('id', todo._id)
       todosList.appendChild(todoLi)
     })
   },
@@ -45,7 +45,7 @@ const ui = {
    * @param {Todo} todo
    */
   removeTodo: function (todo) {
-    const todoEl = document.getElementById(todo.id)
+    const todoEl = document.getElementById(todo._id)
     todoEl.parentNode.removeChild(todoEl)
   },
   /**
@@ -55,7 +55,7 @@ const ui = {
    * @param {Todo} newTodo
    */
   setTodo: function (oldTodo, newTodo) {
-    const todoEl = document.getElementById(oldTodo.id)
+    const todoEl = document.getElementById(oldTodo._id)
     // set the title
     todoEl.textContent = newTodo.title
     // set the id

@@ -1,19 +1,10 @@
 /* global navigator */
 const Dexie = require('dexie')
-const firebase = require('firebase')
+const xhr = require('xhr')
 const uiManager = require('./ui')
+const url = 'https://sw-full.firebaseio.com/todos.json'
 
 'use strict'
-
-// Initialize Firebase
-var config = {
-  apiKey: 'AIzaSyAnW2qoCAtXu5-JbeXb5TR-fTiYqrlY63U',
-  authDomain: 'sw-full.firebaseapp.com',
-  databaseURL: 'https://sw-full.firebaseio.com',
-  storageBucket: 'sw-full.appspot.com'
-}
-firebase.initializeApp(config)
-const rootRef = firebase.database().ref('todos')
 
 let app = {}
 let db = new Dexie('todos')
@@ -30,6 +21,19 @@ function Todo (args) {
   this.title = args ? args.title : ''
   this.checked = args ? args.checked : false
   this.date = args ? args.date : new Date()
+}
+
+Todo.prototype.toObject = function () {
+  return {
+    title: this.title,
+    checked: this.checked,
+    date: this.date,
+    _id: this._id
+  }
+}
+
+Todo.prototype.toObjectString = function () {
+  return JSON.stringify(this.toObject())
 }
 
 // the data
@@ -50,25 +54,39 @@ app.shouldUpdate = false
 app.getTodos = function () {
   // update from the database
   // if there is connection, try to get data from firbase
-  if (navigator.online) {
-    rootRef.once('value')
-      .then(function (todos) {
-        app.todos = todos
 
-        // update the local db with whatever is in firebase
-        db.todos.clear()
-        db.bulkAdd(todos)
-      }).catch(function (err) {
-        console.log('[app] Error ' + err)
+  xhr.get(url, function (err, response) {
+    if (err) {
+      // update local db
+      db.todos.toArray().then(function (todos) {
+        app.todos = todos
+        console.log('[app.getTodos] Done getting todos from local db')
+  
+        // update the view
+        uiManager.updateTodos(app.todos)
       })
-  } else {
-    db.todos.toArray().then(function (todosArray) {
-      app.todos = todosArray
+      console.log(err)
+      return
+    }
+    // uggly hack for firebase
+    const jsonData = JSON.parse(response.body)
+    const responseKeys = Object.keys(jsonData)
+    const realResponse = responseKeys.map(function (key) {
+      let returned = jsonData[key]
+      returned._id = key
+      return returned
     })
-    app.shouldUpdate = true
-  }
-  // update the view
-  uiManager.updateTodos(app.todos)
+    app.todos = realResponse
+    // update the view
+    uiManager.updateTodos(app.todos)
+
+    console.log('[app.getTodos] Done retrieving data from firebase')
+    db.todos.bulkPut(realResponse).then(function () {
+      console.log('[app.getTodos] Done putting todos in local db')
+    }).catch(function (err) {
+      console.log(err)
+    })
+  })
 }
 
 /**
@@ -80,22 +98,27 @@ app.addTodo = function (todoTitle) {
   // creates the todo
   const todo = new Todo({
     title: todoTitle,
-    checked: false
+    checked: false,
+    date: new Date()
   })
-  // saves to local db
-  const todoId = db.todos.add(todo)
-  todo.id = todoId
 
   // try to save asynchronously to firebase
-  if (navigator.online) {
-    var newTodoRef = rootRef.push()
-    newTodoRef.set(todo)
-  } else {
-    app.shouldUpdate = true
-  }
-  app.todos.push(todo)
-  // update the view
-  uiManager.addTodo(todo)
+  xhr.post(url, { body: todo.toObjectString() }, function (err, response) {
+    if (err) {
+      app.shouldUpdate = true
+      console.log(err)
+      return
+    }
+    todo._id = JSON.parse(response.body).name
+    app.todos.push(todo)
+    db.todos.add(todo.toObject())
+    .then(function () {
+      // update the view
+      uiManager.addTodo(todo)
+      console.log('[app.getTodo] Done adding todo to local db')
+    })
+    console.log('[app.getTodo] Done adding todo to firebase')
+  })
 }
 
 /**
@@ -181,15 +204,13 @@ document.querySelector('.todo-form').addEventListener('submit', function (e) {
 
 // for the first load
 db.todos.toArray().then(function (todosArray) {
-  app.todos = todosArray
+  if (todosArray && todosArray.length > 0) {
+    app.todos = todosArray
+    uiManager.updateTodos(app.todos)
+  } else {
+    app.getTodos()
+  }
 })
-
-if (app.todos) {
-  // update the DOM
-  uiManager.updateTodos(app.todos)
-} else {
-  app.getTodos()
-}
 
 // register the service worker
 if ('serviceWorker' in navigator) {
