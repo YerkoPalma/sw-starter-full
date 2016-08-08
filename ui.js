@@ -1,5 +1,6 @@
 const todoInput = document.querySelector('.todo-form input')
 const todosList = document.querySelector('ul.todos')
+const Todo = require('./Todo')
 
 const ui = {
   /**
@@ -8,11 +9,26 @@ const ui = {
    * @param {Todo} todo
    * @param {String} id
    */
-  addTodo: function (todo) {
+  addTodo: function (todo, handler) {
     // add to list
     let todoLi = document.createElement('li')
+    let todoCheckbox = document.createElement('input')
+    todoCheckbox.setAttribute('type', 'checkbox')
+    todoCheckbox.setAttribute('data-for', todo._id)
+    todoCheckbox.addEventListener('change', function (e) {
+      const oldTodo = todo
+      // only toggle the state
+      const newTodo = new Todo({
+        title: todo.title,
+        _id: todo._id,
+        checked: !todo.checked,
+        date: new Date()
+      })
+      handler(oldTodo, newTodo)
+    })
     todoLi.textContent = todo.title
     todoLi.setAttribute('id', todo._id)
+    todoLi.appendChild(todoCheckbox)
     todosList.appendChild(todoLi)
     // clear input
     todoInput.value = ''
@@ -22,31 +38,34 @@ const ui = {
    *
    * @param {Array} list of all todos
    */
-  updateTodos: function (todos) {
+  updateTodos: function (todos, handler) {
     todos.forEach(function (todo) {
       let todoLi = document.createElement('li')
+      let todoCheckbox = document.createElement('input')
+      todoCheckbox.setAttribute('type', 'checkbox')
+      todoCheckbox.setAttribute('data-for', todo._id)
+      todoCheckbox.addEventListener('change', function (e) {
+        const oldTodo = todo
+        // only toggle the state
+        const newTodo = new Todo({
+          title: todo.title,
+          _id: todo._id,
+          checked: !todo.checked,
+          date: new Date()
+        })
+        handler(oldTodo, newTodo)
+      })
       todoLi.textContent = todo.title
       todoLi.setAttribute('id', todo._id)
+      todoLi.appendChild(todoCheckbox)
+      if (todo.checked) {
+        todoLi.classList.add('checked')
+      } else if (todoLi.classList.contains('checked')) {
+        todoLi.classList.remove('checked')
+      }
+      todoLi.querySelector('input[type="checkbox"]').checked = todo.checked
       todosList.appendChild(todoLi)
     })
-  },
-  /**
-   * Mark all todos as checked
-   */
-  checkAll: function () {
-    let todosLi = todosList.querySelectorAll('li')
-    Array.prototype.forEach.call(todosLi, function (todoLi) {
-      todoLi.classList.add('checked')
-    })
-  },
-  /**
-   * Remove a single todo from the ul list
-   *
-   * @param {Todo} todo
-   */
-  removeTodo: function (todo) {
-    const todoEl = document.getElementById(todo._id)
-    todoEl.parentNode.removeChild(todoEl)
   },
   /**
    * Update a todo
@@ -56,12 +75,13 @@ const ui = {
    */
   setTodo: function (oldTodo, newTodo) {
     const todoEl = document.getElementById(oldTodo._id)
-    // set the title
-    todoEl.textContent = newTodo.title
-    // set the id
-    todoEl.setAttribute('id', newTodo.id)
     // set the state
-    todoEl.classList.add(newTodo.checked ? 'checked' : '')
+    if (newTodo.checked) {
+      todoEl.classList.add('checked')
+    } else if (todoEl.classList.contains('checked')) {
+      todoEl.classList.remove('checked')
+    }
+    todoEl.querySelector('input[type="checkbox"]').checked = newTodo.checked
   }
 }
 // manage the ui for todos

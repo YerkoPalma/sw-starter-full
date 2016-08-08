@@ -2,6 +2,7 @@
 const Dexie = require('dexie')
 const xhr = require('xhr')
 const uiManager = require('./ui')
+const Todo = require('./Todo')
 const url = 'https://sw-full.firebaseio.com/todos.json'
 
 'use strict'
@@ -15,26 +16,6 @@ db.version(1).stores({
 db.open().catch(function (err) {
   console.log(err)
 })
-
-// define Todo class
-function Todo (args) {
-  this.title = args ? args.title : ''
-  this.checked = args ? args.checked : false
-  this.date = args ? args.date : new Date()
-}
-
-Todo.prototype.toObject = function () {
-  return {
-    title: this.title,
-    checked: this.checked,
-    date: this.date,
-    _id: this._id
-  }
-}
-
-Todo.prototype.toObjectString = function () {
-  return JSON.stringify(this.toObject())
-}
 
 // the data
 app.todos = []
@@ -63,7 +44,7 @@ app.getTodos = function () {
         console.log('[app.getTodos] Done getting todos from local db')
 
         // update the view
-        uiManager.updateTodos(app.todos)
+        uiManager.updateTodos(app.todos, app.setTodo)
       })
       console.log(err)
       return
@@ -78,7 +59,7 @@ app.getTodos = function () {
     })
     app.todos = realResponse
     // update the view
-    uiManager.updateTodos(app.todos)
+    uiManager.updateTodos(app.todos, app.setTodo)
 
     console.log('[app.getTodos] Done retrieving data from firebase')
     db.todos.bulkPut(realResponse).then(function () {
@@ -107,36 +88,19 @@ app.addTodo = function (todoTitle) {
     if (err) {
       app.shouldUpdate = true
       console.log(err)
-      return
     }
     todo._id = JSON.parse(response.body).name
     app.todos.push(todo)
     db.todos.add(todo.toObject())
     .then(function () {
       // update the view
-      uiManager.addTodo(todo)
+      uiManager.addTodo(todo, app.setTodo)
       console.log('[app.getTodo] Done adding todo to local db')
     }).catch(function (err) {
       console.log(err)
     })
     console.log('[app.getTodo] Done adding todo to firebase')
   })
-}
-
-/**
- * Remove a todo
- *
- * @param {Todo} todo
- * @return {Boolean}
- */
-app.removeTodo = function (todo) {
-  // delete from local db
-  db.todos.delete(todo.id)
-
-  // delete from firebase
-
-  // update the view
-  uiManager.removeTodo(todo)
 }
 
 /**
@@ -147,39 +111,28 @@ app.removeTodo = function (todo) {
  * @return {Boolean}
  */
 app.setTodo = function (oldTodo, newTodo) {
-  // update local db
-  db.todos.update(oldTodo.id, newTodo).then(function (updated) {
-    if (updated) {
-      console.log('[app.setTodo] todo updated')
-    } else {
-      console.log('[app.setTodo] todo NOT updated')
+  const obj = `{
+      "${oldTodo._id}": ${newTodo.toObjectString()}
     }
-  })
-
+  `
   // update firebase
-
-  // update the view
-  uiManager.setTodo(oldTodo, newTodo)
-}
-
-/**
- * Set all todos as finished
- *
- * @return {Boolean}
- */
-app.checkAll = function () {
-  // check all todos in local db
-  const checkedTodos = db.todos.toArray().map(function (todo) {
-    todo.checked = true
-    return todo
+  xhr.patch(url, { body: obj }, function (err, response) {
+    if (err) {
+      app.shouldUpdate = true
+      console.log(err)
+    }
+    app.todos[app.todos.indexOf(oldTodo)] = newTodo
+    // update local db
+    db.todos.update(oldTodo._id, newTodo).then(function (updated) {
+      if (updated) {
+        console.log('[app.setTodo] todo updated')
+      } else {
+        console.log('[app.setTodo] todo NOT updated')
+      }
+      // update the view
+      uiManager.setTodo(oldTodo, newTodo)
+    })
   })
-  db.todos.bulkPut(checkedTodos).then(function () {
-    console.log('[app] checked all todos')
-  }).catch(function (err) {
-    console.log(err)
-  })
-  // update the view
-  uiManager.checkAll()
 }
 
 /**

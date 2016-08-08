@@ -1,22 +1,4 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-/* global navigator */
-const Dexie = require('dexie')
-const xhr = require('xhr')
-const uiManager = require('./ui')
-const url = 'https://sw-full.firebaseio.com/todos.json'
-
-'use strict'
-
-let app = {}
-let db = new Dexie('todos')
-db.version(1).stores({
-  todos: '++id,title,checked,date'
-})
-
-db.open().catch(function (err) {
-  console.log(err)
-})
-
 // define Todo class
 function Todo (args) {
   this.title = args ? args.title : ''
@@ -36,6 +18,26 @@ Todo.prototype.toObject = function () {
 Todo.prototype.toObjectString = function () {
   return JSON.stringify(this.toObject())
 }
+module.exports = Todo
+},{}],2:[function(require,module,exports){
+/* global navigator */
+const Dexie = require('dexie')
+const xhr = require('xhr')
+const uiManager = require('./ui')
+const Todo = require('./Todo')
+const url = 'https://sw-full.firebaseio.com/todos.json'
+
+'use strict'
+
+let app = {}
+let db = new Dexie('todos')
+db.version(1).stores({
+  todos: '++id,title,checked,date'
+})
+
+db.open().catch(function (err) {
+  console.log(err)
+})
 
 // the data
 app.todos = []
@@ -64,7 +66,7 @@ app.getTodos = function () {
         console.log('[app.getTodos] Done getting todos from local db')
 
         // update the view
-        uiManager.updateTodos(app.todos)
+        uiManager.updateTodos(app.todos, app.setTodo)
       })
       console.log(err)
       return
@@ -79,7 +81,7 @@ app.getTodos = function () {
     })
     app.todos = realResponse
     // update the view
-    uiManager.updateTodos(app.todos)
+    uiManager.updateTodos(app.todos, app.setTodo)
 
     console.log('[app.getTodos] Done retrieving data from firebase')
     db.todos.bulkPut(realResponse).then(function () {
@@ -108,36 +110,19 @@ app.addTodo = function (todoTitle) {
     if (err) {
       app.shouldUpdate = true
       console.log(err)
-      return
     }
     todo._id = JSON.parse(response.body).name
     app.todos.push(todo)
     db.todos.add(todo.toObject())
     .then(function () {
       // update the view
-      uiManager.addTodo(todo)
+      uiManager.addTodo(todo, app.setTodo)
       console.log('[app.getTodo] Done adding todo to local db')
     }).catch(function (err) {
       console.log(err)
     })
     console.log('[app.getTodo] Done adding todo to firebase')
   })
-}
-
-/**
- * Remove a todo
- *
- * @param {Todo} todo
- * @return {Boolean}
- */
-app.removeTodo = function (todo) {
-  // delete from local db
-  db.todos.delete(todo.id)
-
-  // delete from firebase
-
-  // update the view
-  uiManager.removeTodo(todo)
 }
 
 /**
@@ -148,39 +133,28 @@ app.removeTodo = function (todo) {
  * @return {Boolean}
  */
 app.setTodo = function (oldTodo, newTodo) {
-  // update local db
-  db.todos.update(oldTodo.id, newTodo).then(function (updated) {
-    if (updated) {
-      console.log('[app.setTodo] todo updated')
-    } else {
-      console.log('[app.setTodo] todo NOT updated')
+  const obj = `{
+      "${oldTodo._id}": ${newTodo.toObjectString()}
     }
-  })
-
+  `
   // update firebase
-
-  // update the view
-  uiManager.setTodo(oldTodo, newTodo)
-}
-
-/**
- * Set all todos as finished
- *
- * @return {Boolean}
- */
-app.checkAll = function () {
-  // check all todos in local db
-  const checkedTodos = db.todos.toArray().map(function (todo) {
-    todo.checked = true
-    return todo
+  xhr.patch(url, { body: obj }, function (err, response) {
+    if (err) {
+      app.shouldUpdate = true
+      console.log(err)
+    }
+    app.todos[app.todos.indexOf(oldTodo)] = newTodo
+    // update local db
+    db.todos.update(oldTodo._id, newTodo).then(function (updated) {
+      if (updated) {
+        console.log('[app.setTodo] todo updated')
+      } else {
+        console.log('[app.setTodo] todo NOT updated')
+      }
+      // update the view
+      uiManager.setTodo(oldTodo, newTodo)
+    })
   })
-  db.todos.bulkPut(checkedTodos).then(function () {
-    console.log('[app] checked all todos')
-  }).catch(function (err) {
-    console.log(err)
-  })
-  // update the view
-  uiManager.checkAll()
 }
 
 /**
@@ -225,7 +199,7 @@ if ('serviceWorker' in navigator) {
     })
 }
 
-},{"./ui":10,"dexie":2,"xhr":3}],2:[function(require,module,exports){
+},{"./Todo":1,"./ui":11,"dexie":3,"xhr":4}],3:[function(require,module,exports){
 (function (global){
 (function (global, factory) {
    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -4746,7 +4720,7 @@ if ('serviceWorker' in navigator) {
 }));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 "use strict";
 var window = require("global/window")
 var isFunction = require("is-function")
@@ -4983,7 +4957,7 @@ function getXml(xhr) {
 
 function noop() {}
 
-},{"global/window":4,"is-function":5,"parse-headers":8,"xtend":9}],4:[function(require,module,exports){
+},{"global/window":5,"is-function":6,"parse-headers":9,"xtend":10}],5:[function(require,module,exports){
 (function (global){
 if (typeof window !== "undefined") {
     module.exports = window;
@@ -4996,7 +4970,7 @@ if (typeof window !== "undefined") {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 module.exports = isFunction
 
 var toString = Object.prototype.toString
@@ -5013,7 +4987,7 @@ function isFunction (fn) {
       fn === window.prompt))
 };
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var isFunction = require('is-function')
 
 module.exports = forEach
@@ -5061,7 +5035,7 @@ function forEachObject(object, iterator, context) {
     }
 }
 
-},{"is-function":5}],7:[function(require,module,exports){
+},{"is-function":6}],8:[function(require,module,exports){
 
 exports = module.exports = trim;
 
@@ -5077,7 +5051,7 @@ exports.right = function(str){
   return str.replace(/\s*$/, '');
 };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 var trim = require('trim')
   , forEach = require('for-each')
   , isArray = function(arg) {
@@ -5109,7 +5083,7 @@ module.exports = function (headers) {
 
   return result
 }
-},{"for-each":6,"trim":7}],9:[function(require,module,exports){
+},{"for-each":7,"trim":8}],10:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -5130,9 +5104,10 @@ function extend() {
     return target
 }
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 const todoInput = document.querySelector('.todo-form input')
 const todosList = document.querySelector('ul.todos')
+const Todo = require('./Todo')
 
 const ui = {
   /**
@@ -5141,11 +5116,26 @@ const ui = {
    * @param {Todo} todo
    * @param {String} id
    */
-  addTodo: function (todo) {
+  addTodo: function (todo, handler) {
     // add to list
     let todoLi = document.createElement('li')
+    let todoCheckbox = document.createElement('input')
+    todoCheckbox.setAttribute('type', 'checkbox')
+    todoCheckbox.setAttribute('data-for', todo._id)
+    todoCheckbox.addEventListener('change', function (e) {
+      const oldTodo = todo
+      // only toggle the state
+      const newTodo = new Todo({
+        title: todo.title,
+        _id: todo._id,
+        checked: !todo.checked,
+        date: new Date()
+      })
+      handler(oldTodo, newTodo)
+    })
     todoLi.textContent = todo.title
     todoLi.setAttribute('id', todo._id)
+    todoLi.appendChild(todoCheckbox)
     todosList.appendChild(todoLi)
     // clear input
     todoInput.value = ''
@@ -5155,31 +5145,34 @@ const ui = {
    *
    * @param {Array} list of all todos
    */
-  updateTodos: function (todos) {
+  updateTodos: function (todos, handler) {
     todos.forEach(function (todo) {
       let todoLi = document.createElement('li')
+      let todoCheckbox = document.createElement('input')
+      todoCheckbox.setAttribute('type', 'checkbox')
+      todoCheckbox.setAttribute('data-for', todo._id)
+      todoCheckbox.addEventListener('change', function (e) {
+        const oldTodo = todo
+        // only toggle the state
+        const newTodo = new Todo({
+          title: todo.title,
+          _id: todo._id,
+          checked: !todo.checked,
+          date: new Date()
+        })
+        handler(oldTodo, newTodo)
+      })
       todoLi.textContent = todo.title
       todoLi.setAttribute('id', todo._id)
+      todoLi.appendChild(todoCheckbox)
+      if (todo.checked) {
+        todoLi.classList.add('checked')
+      } else if (todoLi.classList.contains('checked')) {
+        todoLi.classList.remove('checked')
+      }
+      todoLi.querySelector('input[type="checkbox"]').checked = todo.checked
       todosList.appendChild(todoLi)
     })
-  },
-  /**
-   * Mark all todos as checked
-   */
-  checkAll: function () {
-    let todosLi = todosList.querySelectorAll('li')
-    Array.prototype.forEach.call(todosLi, function (todoLi) {
-      todoLi.classList.add('checked')
-    })
-  },
-  /**
-   * Remove a single todo from the ul list
-   *
-   * @param {Todo} todo
-   */
-  removeTodo: function (todo) {
-    const todoEl = document.getElementById(todo._id)
-    todoEl.parentNode.removeChild(todoEl)
   },
   /**
    * Update a todo
@@ -5189,15 +5182,16 @@ const ui = {
    */
   setTodo: function (oldTodo, newTodo) {
     const todoEl = document.getElementById(oldTodo._id)
-    // set the title
-    todoEl.textContent = newTodo.title
-    // set the id
-    todoEl.setAttribute('id', newTodo.id)
     // set the state
-    todoEl.classList.add(newTodo.checked ? 'checked' : '')
+    if (newTodo.checked) {
+      todoEl.classList.add('checked')
+    } else if (todoEl.classList.contains('checked')) {
+      todoEl.classList.remove('checked')
+    }
+    todoEl.querySelector('input[type="checkbox"]').checked = newTodo.checked
   }
 }
 // manage the ui for todos
 module.exports = ui
 
-},{}]},{},[1]);
+},{"./Todo":1}]},{},[2]);
