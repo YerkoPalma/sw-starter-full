@@ -56,10 +56,13 @@ app.getTodos = function () {
     uiManager.updateTodos(app.todos, app.setTodo)
 
     console.log('[app.getTodos] Done retrieving data from firebase')
-    db.todos.bulkPut(realResponse).then(function () {
-      console.log('[app.getTodos] Done putting todos in local db')
-    }).catch(function (err) {
-      console.log(err)
+    // ensure that local db has an exact copy of remote db
+    db.todos.clear().then(function () {
+      db.todos.bulkPut(realResponse).then(function () {
+        console.log('[app.getTodos] Done putting todos in local db')
+      }).catch(function (err) {
+        console.log(err)
+      })
     })
   })
 }

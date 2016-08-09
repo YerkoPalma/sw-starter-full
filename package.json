@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "deps": "dependency-check . && dependency-check . --extra --no-dev",
-    "clean": "rm -rf dist/ && rm service-worker.js",
+    "clean": "rm -rf dist/ && rm -f service-worker.js",
     "test": "npm run deps && standard --verbose | snazzy",
     "build:sw": "sw-precache --static-file-globs='dist/**/*.*'",
     "build:swprod": "sw-precache --root=dist --static-file-globs='dist/**/*.*'",
@@ -31,6 +31,7 @@
   "devDependencies": {
     "browserify": "^13.1.0",
     "dependency-check": "^2.6.0",
+    "snazzy": "^4.0.1",
     "standard": "^7.1.2",
     "surge": "^0.18.0",
     "sw-precache": "^4.0.0"
