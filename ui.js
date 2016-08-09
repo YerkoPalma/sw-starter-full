@@ -39,6 +39,8 @@ const ui = {
    * @param {Array} list of all todos
    */
   updateTodos: function (todos, handler) {
+    // reset list
+    todosList.innerHTML = ''
     todos.forEach(function (todo) {
       let todoLi = document.createElement('li')
       let todoCheckbox = document.createElement('input')
