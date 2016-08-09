@@ -19,6 +19,7 @@ Todo.prototype.toObjectString = function () {
   return JSON.stringify(this.toObject())
 }
 module.exports = Todo
+
 },{}],2:[function(require,module,exports){
 /* global navigator */
 const Dexie = require('dexie')
@@ -44,12 +45,6 @@ app.todos = []
 
 // tells if there is difference between online data and local data
 app.shouldUpdate = false
-
-/**
- * Methods should handle offline mode by checking navigator.online.
- * In fact, offline is supported by default, and online only when
- * navigator.online === true.
- */
 
 /**
  * Get the list of all todos
@@ -165,7 +160,8 @@ app.setTodo = function (oldTodo, newTodo) {
 app.update = function () {
   // only update if needed
   if (app.shouldUpdate) {
-
+    // should be enough
+    app.getTodos()
   }
 }
 
@@ -184,9 +180,9 @@ db.todos.toArray().then(function (todosArray) {
   if (todosArray && todosArray.length > 0) {
     app.todos = todosArray
     uiManager.updateTodos(app.todos)
-  } else {
-    app.getTodos()
   }
+  // update from db always
+  app.getTodos()
 })
 
 // register the service worker

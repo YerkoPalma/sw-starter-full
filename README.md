@@ -1,9 +1,9 @@
-Full service worker starter 
+Full service worker starter [![Build Status](https://img.shields.io/travis/YerkoPalma/sw-starter-full/master.svg?style=flat-square)](https://travis-ci.org/YerkoPalma/sw-starter-full)
 ===========================
 
 > More realistic service worker starter
 
-Check here: 
+Check here: https://sw-starter-full.surge.sh
 
 ## Overview
 

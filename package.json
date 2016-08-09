@@ -8,9 +8,12 @@
     "clean": "rm -rf dist/ && rm service-worker.js",
     "test": "npm run deps && standard --verbose | snazzy",
     "build:sw": "sw-precache --static-file-globs='dist/**/*.*'",
+    "build:swprod": "sw-precache --root=dist --static-file-globs='dist/**/*.*'",
     "build:copy": "mkdir -p dist && cp index.html dist/index.html",
     "build:browserify": "NODE_ENV=production browserify -e app.js -o dist/app.js",
-    "build": "npm run build:copy && npm run build:browserify && npm run build:sw"
+    "build": "npm run build:copy && npm run build:browserify && npm run build:sw",
+    "build:prod": "npm run build:copy && npm run build:browserify && npm run build:swprod",
+    "deploy": "npm run build:prod && surge ./dist"
   },
   "keywords": [
     "service",
