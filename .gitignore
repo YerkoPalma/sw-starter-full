@@ -2,4 +2,3 @@ node_modules
 .c9
 *.log
 dist
-service-worker.js

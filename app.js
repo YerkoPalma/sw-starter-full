@@ -199,6 +199,10 @@ if ('serviceWorker' in navigator) {
             break
         }
       }
+      // sw can also send messages
+      installingWorker.addEventListener('message', function (e) {
+        // handle db data from sw
+      })
     }
   }).catch(function (e) {
     console.error('Error during service worker registration:', e)
